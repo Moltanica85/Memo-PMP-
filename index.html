@@ -13,9 +13,15 @@
         .transform-style-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
+        .pattern-bg {
+            background-color: #e7e5e4;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(0,0,0,.05) 35px, rgba(0,0,0,.05) 70px),
+                repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(0,0,0,.03) 35px, rgba(0,0,0,.03) 70px);
+        }
     </style>
 </head>
-<body class="bg-stone-100 overflow-x-hidden">
+<body class="pattern-bg overflow-x-hidden">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -74,18 +80,26 @@
                 }
             };
 
+            const formatTime = (seconds) => {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+
             return (
                 <div className="flex flex-col items-center p-2 min-h-screen">
                     <h1 className="text-xl font-black my-4 text-stone-800 uppercase tracking-widest">Poszukaj Mnie Panie</h1>
                     <div className="flex gap-4 mb-6 text-sm font-bold text-stone-500 bg-white px-4 py-2 rounded-full border shadow-sm">
-                        <span>Czas: {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}</span>
+                        <span>Czas: {formatTime(seconds)}</span>
                         <span>Ruchy: {moves}</span>
                     </div>
                     <div className="grid grid-cols-4 gap-2 w-full max-w-sm">
                         {cards.map(c => (
                             <div key={c.id} onClick={() => handleClick(c.id)} className="aspect-square cursor-pointer perspective-1000">
                                 <div className={`relative w-full h-full transition-all duration-500 transform-style-3d ${flipped.includes(c.id) || solved.includes(c.id) ? 'rotate-y-180' : ''}`}>
-                                    <div className="absolute w-full h-full backface-hidden bg-stone-800 rounded-lg flex items-center justify-center text-white font-bold border-2 border-stone-600 text-lg">?</div>
+                                    <div className="absolute w-full h-full backface-hidden bg-stone-800 rounded-lg flex items-center justify-center text-white font-bold border-2 border-stone-600">
+                                        ?
+                                    </div>
                                     <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-white rounded-lg border-2 border-amber-500 overflow-hidden shadow-md">
                                         <img src={c.img} className="w-full h-full object-cover" />
                                     </div>
@@ -97,8 +111,18 @@
                     {solved.length === cards.length && cards.length > 0 && (
                         <div className="fixed inset-0 bg-stone-900/90 flex items-center justify-center z-50 p-6">
                             <div className="bg-white p-8 rounded-2xl text-center max-w-xs w-full shadow-2xl">
-                                <h2 className="text-2xl font-bold mb-4">Wygrana! 🎉</h2>
-                                <button onClick={init} className="w-full bg-amber-500 text-white py-3 rounded-xl font-bold uppercase tracking-wider">Zagraj od nowa</button>
+                                <h2 className="text-2xl font-bold mb-6 text-stone-800">🎉 Wygrana! 🎉</h2>
+                                <div className="space-y-3 mb-6 bg-stone-50 p-4 rounded-lg">
+                                    <div className="text-lg font-semibold text-stone-700">
+                                        <span className="block text-stone-500 text-sm mb-1">Czas</span>
+                                        <span className="text-2xl text-amber-600">{formatTime(seconds)}</span>
+                                    </div>
+                                    <div className="text-lg font-semibold text-stone-700">
+                                        <span className="block text-stone-500 text-sm mb-1">Liczba ruchów</span>
+                                        <span className="text-2xl text-amber-600">{moves}</span>
+                                    </div>
+                                </div>
+                                <button onClick={init} className="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-xl font-bold uppercase tracking-wider transition">Zagraj od nowa</button>
                             </div>
                         </div>
                     )}
