@@ -192,7 +192,7 @@
 
             return (
                 <div className="fixed inset-0 bg-stone-900/90 flex items-center justify-center z-50 p-6">
-                    <div className="bg-white p-8 rounded-2xl text-center max-w-xs w-full shadow-2xl animate-bounce">
+                    <div className="bg-white p-8 rounded-2xl text-center max-w-xs w-full shadow-2xl">
                         <h3 className="text-xl font-bold mb-4 text-stone-800">Zapisz się w rankingu!</h3>
                         <p className="text-stone-600 mb-4 text-sm">Twój wynik:</p>
                         <div className="bg-stone-50 p-3 rounded-lg mb-6 space-y-2">
@@ -330,7 +330,7 @@
                         {cards.map(c => (
                             <div key={c.id} onClick={() => handleClick(c.id)} className="aspect-square cursor-pointer perspective-1000">
                                 <div className={`relative w-full h-full transition-all duration-500 transform-style-3d ${flipped.includes(c.id) || solved.includes(c.id) ? 'rotate-y-180' : ''}`}>
-                                    <div className="absolute w-full h-full backface-hidden bg-stone-800 rounded-lg flex items-center justify-center text-white font-bold border-2 border-stone-600 text-3xl">
+                                    <div className="absolute w-full h-full backface-hidden bg-stone-800 rounded-lg flex items-center justify-center text-white font-bold border-2 border-stone-600">
                                         ?
                                     </div>
                                     <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-white rounded-lg border-2 border-amber-500 overflow-hidden shadow-md">
