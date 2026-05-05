@@ -14,6 +14,7 @@
         .transform-style-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
+        
         .pattern-bg {
             background-image: url('1777988250540-019df85b-53a7-74e3-9ff1-6179b1df9a37.png');
             background-size: cover;
@@ -22,7 +23,6 @@
             background-repeat: no-repeat;
         }
         
-        /* Styl nagłówka z nową czcionką */
         .gothic-title {
             font-family: 'Cinzel', serif;
             font-size: 2.2rem;
@@ -30,11 +30,12 @@
             text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
             font-weight: 700;
             text-transform: uppercase;
+            text-align: center;
         }
 
-        /* Tło okna rankingowego z Twoim plikiem */
+        /* Twoje tło okna rankingowego */
         .ranking-modal-content {
-            background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), url('okno rankingowe.jpg');
+            background-image: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)), url('okno rankingowe.jpg');
             background-size: cover;
             background-position: center;
             border: 4px solid #d4a574;
@@ -68,11 +69,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- KONFIGURACJA RANKINGU ONLINE ---
-        // Aby ranking działał u wszystkich, wpisz tutaj dane z jsonbin.io
-        const JSONBIN_API_KEY = '$2a$10$YOUR_KEY_HERE'; 
-        const JSONBIN_BIN_ID = 'YOUR_BIN_ID_HERE';
-
+        // Pliki kart
         const IMAGE_FILES = ['1.jpeg', '2.jpeg', '3.jpeg', '4.png', '5.png', '6.png', '7.png', '8.png'];
 
         const RankingBadge = ({ position }) => {
@@ -95,17 +92,17 @@
             if (!isOpen) return null;
 
             return (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] p-4">
                     <div className="ranking-modal-content rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
-                        <div className="bg-stone-800/90 text-white p-6 text-center border-b-2 border-amber-500">
-                            <h2 className="text-3xl font-bold tracking-widest" style={{fontFamily: 'Cinzel'}}>Sala Chwały</h2>
+                        <div className="bg-stone-800/95 text-white p-6 text-center border-b-2 border-amber-500">
+                            <h2 className="text-3xl font-bold tracking-widest" style={{fontFamily: 'Cinzel'}}>Ranking Graczy</h2>
                         </div>
                         <div className="overflow-y-auto p-4 space-y-2 flex-1">
                             {rankings.length === 0 ? (
-                                <p className="text-center p-10 font-bold">Ładowanie wyników...</p>
+                                <p className="text-center p-10 font-bold text-stone-800">Brak wyników. Bądź pierwszy!</p>
                             ) : (
                                 rankings.map((entry, idx) => (
-                                    <div key={idx} className="rank-row border-l-4 border-amber-600 p-3 rounded flex items-center justify-between">
+                                    <div key={idx} className="rank-row border-l-4 border-amber-600 p-3 rounded flex items-center justify-between shadow-sm">
                                         <div className="flex items-center gap-4">
                                             <RankingBadge position={idx + 1} />
                                             <div>
@@ -122,7 +119,7 @@
                             )}
                         </div>
                         <button onClick={onClose} className="m-4 py-3 bg-stone-900 text-white rounded-xl font-bold hover:bg-black transition">
-                            POWRÓT DO GRY
+                            POWRÓT
                         </button>
                     </div>
                 </div>
@@ -143,12 +140,12 @@
             const [nickname, setNickname] = useState('');
             const timerRef = useRef(null);
 
-            // Funkcja pobierania rankingu (Online + LocalFallback)
-            const fetchRankings = async () => {
-                const localData = JSON.parse(localStorage.getItem('memoPmpRankings') || '[]');
-                setRankings(localData.sort((a,b) => a.seconds - b.seconds).slice(0, 50));
-                
-                // Tutaj można dodać logikę fetch() z JSONBin w przyszłości
+            const fetchRankings = () => {
+                const saved = localStorage.getItem('memoPmpRankings');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    setRankings(data.sort((a,b) => a.seconds - b.seconds).slice(0, 50));
+                }
             };
 
             useEffect(() => {
@@ -175,7 +172,7 @@
                     timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
                 } else if (solved.length === cards.length && cards.length > 0) {
                     clearInterval(timerRef.current);
-                    setShowWinModal(true);
+                    setTimeout(() => setShowWinModal(true), 500);
                 }
                 return () => clearInterval(timerRef.current);
             }, [isActive, solved.length]);
@@ -198,8 +195,10 @@
                 }
             };
 
+            const formatTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+
             const handleSave = () => {
-                if (!nickname.trim()) return alert("Wpisz imię!");
+                if (!nickname.trim()) return alert("Wpisz swoje imię!");
                 const newEntry = {
                     nickname: nickname.trim(),
                     time: formatTime(seconds),
@@ -210,65 +209,90 @@
                 const updated = [...rankings, newEntry].sort((a,b) => a.seconds - b.seconds).slice(0, 50);
                 localStorage.setItem('memoPmpRankings', JSON.stringify(updated));
                 setRankings(updated);
+                setNickname('');
                 init();
             };
 
-            const formatTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-
             return (
-                <div className="flex flex-col items-center p-4">
-                    <header className="w-full max-w-md flex justify-between items-center mb-6">
+                <div className="flex flex-col items-center p-4 min-h-screen">
+                    <header className="w-full max-w-md py-6">
                         <h1 className="gothic-title">Poszukaj Mnie Panie</h1>
                     </header>
 
-                    <div className="flex gap-8 mb-6 font-bold text-white bg-black/40 px-6 py-2 rounded-full backdrop-blur-md border border-white/20">
-                        <span>⏱️ {formatTime(seconds)}</span>
-                        <span>🎯 {moves}</span>
+                    <div className="flex gap-8 mb-6 font-bold text-white bg-black/50 px-8 py-3 rounded-full backdrop-blur-md border border-white/20 shadow-xl">
+                        <div className="flex flex-col items-center">
+                            <span className="text-[10px] uppercase opacity-60">Czas</span>
+                            <span>{formatTime(seconds)}</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <span className="text-[10px] uppercase opacity-60">Ruchy</span>
+                            <span>{moves}</span>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-4 gap-2 w-full max-w-sm">
                         {cards.map(c => (
                             <div key={c.id} onClick={() => handleClick(c.id)} className="aspect-square cursor-pointer perspective-1000">
                                 <div className={`relative w-full h-full transition-all duration-500 transform-style-3d ${flipped.includes(c.id) || solved.includes(c.id) ? 'rotate-y-180' : ''}`}>
-                                    <div className="absolute w-full h-full backface-hidden bg-stone-900 rounded-lg flex items-center justify-center text-amber-500 text-2xl font-black border-2 border-stone-700 shadow-xl">
+                                    <div className="absolute w-full h-full backface-hidden bg-stone-900 rounded-lg flex items-center justify-center text-amber-500 text-3xl font-black border-2 border-stone-700 shadow-lg">
                                         ?
                                     </div>
                                     <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-white rounded-lg border-2 border-amber-500 overflow-hidden shadow-2xl">
-                                        <img src={c.img} className="w-full h-full object-cover" />
+                                        <img src={c.img} className="w-full h-full object-cover" loading="lazy" />
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    <div className="mt-8 flex gap-4">
-                        <button onClick={init} className="px-6 py-3 bg-stone-800 text-white rounded-lg font-bold hover:bg-stone-700 transition shadow-lg">NOWA GRA</button>
-                        <button onClick={() => setShowFullRanking(true)} className="px-6 py-3 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-500 transition shadow-lg">🏆 RANKING</button>
+                    <div className="mt-10 flex gap-4 w-full max-w-sm">
+                        <button onClick={init} className="flex-1 py-4 bg-stone-800 text-white rounded-2xl font-bold hover:bg-stone-700 transition shadow-lg border-b-4 border-stone-950">NOWA GRA</button>
+                        <button onClick={() => setShowFullRanking(true)} className="flex-1 py-4 bg-amber-600 text-white rounded-2xl font-bold hover:bg-amber-500 transition shadow-lg border-b-4 border-amber-800">🏆 RANKING</button>
                     </div>
 
                     {/* MODAL WYGRANEJ Z GIFEM */}
                     {showWinModal && (
-                        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
-                            <div className="bg-white rounded-3xl p-6 w-full max-w-sm text-center animate-win shadow-[0_0_50px_rgba(255,191,0,0.5)]">
-                                <img 
-    src="win.gif" 
-    alt="Gratulacje!" 
-    className="w-full h-48 object-contain mb-4 rounded-xl"
-/>
-                                <h2 className="text-3xl font-black text-stone-800 mb-2">ZNAKOMICE!</h2>
-                                <p className="text-stone-600 mb-6">Ukończyłeś grę w czasie <span className="font-bold text-amber-600">{formatTime(seconds)}</span></p>
+                        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+                            <div className="bg-white rounded-3xl p-6 w-full max-w-sm text-center animate-win shadow-[0_0_60px_rgba(255,191,0,0.4)]">
+                                <div className="relative mb-4">
+                                    <img 
+                                        src="win.gif" 
+                                        alt="Gratulacje!" 
+                                        className="w-full h-52 object-contain rounded-2xl bg-stone-50"
+                                        onError={(e) => {
+                                            console.log("Gif nie załadowany, używam kodowania");
+                                            e.target.src = encodeURI("win.gif");
+                                        }}
+                                    />
+                                    <div className="absolute -top-4 -right-4 bg-amber-500 text-white p-3 rounded-full shadow-lg font-bold">#1</div>
+                                </div>
+                                
+                                <h2 className="text-3xl font-black text-stone-800 mb-1" style={{fontFamily: 'Cinzel'}}>BRAWO!</h2>
+                                <p className="text-stone-500 mb-6 font-medium">Udało Ci się odnaleźć wszystkie pary!</p>
+                                
+                                <div className="bg-stone-100 rounded-2xl p-4 mb-6 flex justify-around">
+                                    <div className="text-center">
+                                        <p className="text-[10px] text-stone-400 uppercase">Twój Czas</p>
+                                        <p className="text-2xl font-bold text-amber-600">{formatTime(seconds)}</p>
+                                    </div>
+                                    <div className="text-center border-l border-stone-200 pl-6">
+                                        <p className="text-[10px] text-stone-400 uppercase">Ruchy</p>
+                                        <p className="text-2xl font-bold text-amber-600">{moves}</p>
+                                    </div>
+                                </div>
                                 
                                 <input 
                                     type="text" 
-                                    placeholder="Twoje Imię..." 
-                                    className="w-full p-4 border-2 border-stone-200 rounded-xl mb-4 text-center text-xl outline-none focus:border-amber-500"
+                                    placeholder="Wpisz swój nick..." 
+                                    className="w-full p-4 border-2 border-stone-200 rounded-2xl mb-4 text-center text-xl outline-none focus:border-amber-500 transition-colors"
                                     value={nickname}
                                     onChange={(e) => setNickname(e.target.value)}
+                                    autoFocus
                                 />
                                 
                                 <div className="flex flex-col gap-2">
-                                    <button onClick={handleSave} className="w-full py-4 bg-amber-500 text-white rounded-xl font-bold text-lg hover:shadow-xl transition">ZAPISZ W RANKINGU</button>
-                                    <button onClick={init} className="w-full py-3 text-stone-400 font-bold">ZAGRAJ PONOWNIE BEZ ZAPISU</button>
+                                    <button onClick={handleSave} className="w-full py-4 bg-amber-500 text-white rounded-2xl font-bold text-lg hover:bg-amber-600 transition-all active:scale-95 shadow-md">ZAPISZ W RANKINGU</button>
+                                    <button onClick={init} className="w-full py-3 text-stone-400 font-bold hover:text-stone-600 transition">ZAGRAJ PONOWNIE</button>
                                 </div>
                             </div>
                         </div>
