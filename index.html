@@ -1,12 +1,123 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poszukaj Mnie Panie - Memory Game</title>
-  </head>
-  <body>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poszukaj Mnie Panie</title>
+    <script src="https://unpkg.com"></script>
+    <script src="https://unpkg.com"></script>
+    <script src="https://unpkg.com"></script>
+    <script src="https://tailwindcss.com"></script>
+    <style>
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="bg-stone-50">
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // UWAGA: Dopasowałem nazwy plików do Twojego screena (jpeg i png)
+        const IMAGE_FILES = [
+            '1.jpeg', '2.jpeg', '3.jpeg', '4.png', 
+            '5.png', '6.png', '7.png', '8.png'
+        ];
+
+        const MemoryGame = () => {
+            const [cards, setCards] = useState([]);
+            const [flipped, setFlipped] = useState([]);
+            const [solved, setSolved] = useState([]);
+            const [disabled, setDisabled] = useState(false);
+            const [moves, setMoves] = useState(0);
+            const [seconds, setSeconds] = useState(0);
+            const [isActive, setIsActive] = useState(false);
+            const timerRef = useRef(null);
+
+            const initializeGame = () => {
+                const deck = [...IMAGE_FILES, ...IMAGE_FILES]
+                    .sort(() => Math.random() - 0.5)
+                    .map((img, index) => ({ id: index, img }));
+                setCards(deck);
+                setFlipped([]);
+                setSolved([]);
+                setMoves(0);
+                setSeconds(0);
+                setIsActive(false);
+                if (timerRef.current) clearInterval(timerRef.current);
+            };
+
+            useEffect(() => {
+                initializeGame();
+                return () => clearInterval(timerRef.current);
+            }, []);
+
+            useEffect(() => {
+                if (isActive && solved.length < cards.length) {
+                    timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
+                } else {
+                    clearInterval(timerRef.current);
+                }
+                return () => clearInterval(timerRef.current);
+            }, [isActive, solved.length]);
+
+            const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+
+            const handleClick = (id) => {
+                if (disabled || flipped.includes(id) || solved.includes(id)) return;
+                if (!isActive) setIsActive(true);
+                const newFlipped = [...flipped, id];
+                setFlipped(newFlipped);
+                if (newFlipped.length === 2) {
+                    setDisabled(true);
+                    setMoves(m => m + 1);
+                    if (cards[newFlipped[0]].img === cards[newFlipped[1]].img) {
+                        setSolved([...solved, ...newFlipped]);
+                        setFlipped([]);
+                        setDisabled(false);
+                    } else {
+                        setTimeout(() => { setFlipped([]); setDisabled(false); }, 1000);
+                    }
+                }
+            };
+
+            return (
+                <div className="flex flex-col items-center p-4 min-h-screen">
+                    <h1 className="text-2xl font-black my-4 text-stone-800 uppercase">Poszukaj Mnie Panie</h1>
+                    <div className="flex gap-4 mb-6 font-bold text-stone-600">
+                        <span>Czas: {formatTime(seconds)}</span>
+                        <span>Ruchy: {moves}</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 max-w-md w-full">
+                        {cards.map(card => (
+                            <div key={card.id} onClick={() => handleClick(card.id)} className="aspect-square cursor-pointer perspective-1000">
+                                <div className={`relative w-full h-full transition-all duration-500 transform-style-3d ${flipped.includes(card.id) || solved.includes(card.id) ? 'rotate-y-180' : ''}`}>
+                                    <div className="absolute w-full h-full backface-hidden bg-stone-800 border-2 border-stone-600 flex items-center justify-center text-white font-bold text-xl rounded-lg">?</div>
+                                    <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-white border-2 border-amber-500 rounded-lg overflow-hidden">
+                                        <img src={card.img} className="w-full h-full object-cover" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <button onClick={initializeGame} className="mt-8 px-6 py-2 bg-stone-800 text-white rounded-full font-bold uppercase text-xs tracking-widest">Nowa gra</button>
+                    {solved.length === cards.length && cards.length > 0 && (
+                        <div className="fixed inset-0 bg-stone-900/90 flex items-center justify-center z-50 p-6 text-center">
+                            <div className="bg-white p-8 rounded-2xl">
+                                <h2 className="text-2xl font-bold mb-4">Zwycięstwo! 🎉</h2>
+                                <p className="mb-6">Czas: {formatTime(seconds)} | Ruchy: {moves}</p>
+                                <button onClick={initializeGame} className="bg-amber-500 text-white px-8 py-3 rounded-xl font-bold">Zagraj jeszcze raz</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MemoryGame />);
+    </script>
+</body>
 </html>
